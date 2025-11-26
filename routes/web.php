@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReplyController;
 use App\Http\Controllers\TweetController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +27,10 @@ Route::middleware('auth')->group(function () {
     
     // Like routes
     Route::post('/tweets/{tweet}/like', [LikeController::class, 'toggle'])->name('tweets.like');
+    
+    // Reply routes
+    Route::post('/tweets/{tweet}/replies', [ReplyController::class, 'store'])->name('replies.store');
+    Route::delete('/replies/{reply}', [ReplyController::class, 'destroy'])->name('replies.destroy');
 });
 
 // Public routes

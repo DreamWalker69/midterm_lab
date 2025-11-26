@@ -15,6 +15,7 @@ class Tweet extends Model
         'user_id',
         'content',
         'is_edited',
+        'image_path',
     ];
 
     protected $casts = [
@@ -37,6 +38,14 @@ class Tweet extends Model
     public function likes(): HasMany
     {
         return $this->hasMany(Like::class);
+    }
+
+    /**
+     * Get the replies for the tweet.
+     */
+    public function replies(): HasMany
+    {
+        return $this->hasMany(Reply::class);
     }
 
     /**

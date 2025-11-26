@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Tweet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class TweetController extends Controller
 {
@@ -13,8 +14,8 @@ class TweetController extends Controller
      */
     public function index()
     {
-        $tweets = Tweet::with(['user', 'likes'])
-            ->withCount('likes')
+        $tweets = Tweet::with(['user', 'likes', 'replies.user'])
+            ->withCount(['likes', 'replies'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -28,13 +29,23 @@ class TweetController extends Controller
     {
         $validated = $request->validate([
             'content' => ['required', 'string', 'max:280'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,gif', 'max:2048'],
         ], [
             'content.required' => 'Tweet content is required.',
             'content.max' => 'Tweet cannot exceed 280 characters.',
+            'image.image' => 'File must be an image.',
+            'image.mimes' => 'Image must be jpeg, jpg, png, or gif.',
+            'image.max' => 'Image size cannot exceed 2MB.',
         ]);
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('tweets', 'public');
+        }
 
         Auth::user()->tweets()->create([
             'content' => $validated['content'],
+            'image_path' => $imagePath,
         ]);
 
         return redirect()->route('home')->with('success', 'Tweet posted successfully!');
@@ -65,15 +76,38 @@ class TweetController extends Controller
 
         $validated = $request->validate([
             'content' => ['required', 'string', 'max:280'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,gif', 'max:2048'],
+            'remove_image' => ['nullable', 'boolean'],
         ], [
             'content.required' => 'Tweet content is required.',
             'content.max' => 'Tweet cannot exceed 280 characters.',
+            'image.image' => 'File must be an image.',
+            'image.mimes' => 'Image must be jpeg, jpg, png, or gif.',
+            'image.max' => 'Image size cannot exceed 2MB.',
         ]);
 
-        $tweet->update([
+        // Handle image upload or removal
+        $updateData = [
             'content' => $validated['content'],
             'is_edited' => true,
-        ]);
+        ];
+
+        if ($request->boolean('remove_image')) {
+            // Delete old image if exists
+            if ($tweet->image_path) {
+                Storage::disk('public')->delete($tweet->image_path);
+            }
+            $updateData['image_path'] = null;
+        } elseif ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($tweet->image_path) {
+                Storage::disk('public')->delete($tweet->image_path);
+            }
+            // Store new image
+            $updateData['image_path'] = $request->file('image')->store('tweets', 'public');
+        }
+
+        $tweet->update($updateData);
 
         return redirect()->route('home')->with('success', 'Tweet updated successfully!');
     }
@@ -86,6 +120,11 @@ class TweetController extends Controller
         // Check if user owns this tweet
         if ($tweet->user_id !== Auth::id()) {
             abort(403, 'Unauthorized action.');
+        }
+
+        // Delete associated image if exists
+        if ($tweet->image_path) {
+            Storage::disk('public')->delete($tweet->image_path);
         }
 
         $tweet->delete();
