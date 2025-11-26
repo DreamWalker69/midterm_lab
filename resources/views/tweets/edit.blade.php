@@ -34,7 +34,7 @@
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Image</label>
                     <div id="currentImageContainer" class="relative inline-block">
-                        <img src="{{ asset('storage/' . $tweet->image_path) }}" 
+                        <img src="{{ $tweet->image_url }}" 
                              alt="Current tweet image" 
                              class="max-h-64 rounded-lg border border-gray-300 dark:border-gray-600">
                         <button type="button" 

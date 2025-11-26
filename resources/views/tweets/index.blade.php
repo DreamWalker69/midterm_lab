@@ -111,7 +111,7 @@
                     <!-- Tweet Image -->
                     @if($tweet->image_path)
                         <div class="mb-4">
-                            <img src="{{ asset('storage/' . $tweet->image_path) }}" 
+                            <img src="{{ $tweet->image_url }}" 
                                  alt="Tweet image" 
                                  class="rounded-lg max-h-96 w-full object-cover border border-gray-200 dark:border-gray-700">
                         </div>
