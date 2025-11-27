@@ -78,6 +78,9 @@ class Tweet extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->image_path);
+        // Extract just the filename from the path (remove 'tweets/' prefix)
+        $filename = str_replace('tweets/', '', $this->image_path);
+        
+        return route('tweet.image', ['path' => $filename]);
     }
 }

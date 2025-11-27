@@ -6,6 +6,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReplyController;
 use App\Http\Controllers\TweetController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 // Guest routes
 Route::middleware('guest')->group(function () {
@@ -36,4 +37,15 @@ Route::middleware('auth')->group(function () {
 // Public routes
 Route::get('/', [TweetController::class, 'index'])->name('home');
 Route::get('/profile/{user}', [ProfileController::class, 'show'])->name('profile.show');
+
+// Serve tweet images directly
+Route::get('/tweet-images/{path}', function ($path) {
+    $fullPath = 'tweets/' . $path;
+    
+    if (!Storage::disk('public')->exists($fullPath)) {
+        abort(404);
+    }
+    
+    return response()->file(Storage::disk('public')->path($fullPath));
+})->where('path', '.*')->name('tweet.image');
 
